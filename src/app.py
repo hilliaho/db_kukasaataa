@@ -143,7 +143,8 @@ def find_document_by_he_id(he_id):
     try:
         document = db_service.find_document_by_he_id(he_id)
         if document:
-            typer.echo(f"{he_id}: {document["name"]}")
+            name = document["name"]
+            typer.echo(f"{he_id}: {name}")
             typer.echo(f"Sisältää kentät: {list(document.keys())}")
         else:
             typer.echo(f"Dokumenttia tunnuksella {he_id} ei löytynyt tietokannasta.")
