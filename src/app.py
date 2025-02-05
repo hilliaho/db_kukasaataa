@@ -5,6 +5,7 @@ from services.db_service import DBService
 from utils.avoindata import process_and_store_data
 from utils.formatter import print_pretty_json
 from utils.hankeikkuna import process_hankeikkuna_data
+from utils.hankeikkuna import find_he_id
 import time
 
 
@@ -72,6 +73,36 @@ def export_all_hankeikkuna_data():
                     break
                 time.sleep(5)
 
+@app.command(name="findh")
+def print_he_from_hankeikkuna(he: str):
+    """Etsi tietty hanke hankeikkunasta"""
+    per_page = 1000
+    page = 1
+    max_pages = 1000
+    max_retries = 5
+    for page in range(1, max_pages+1):
+        typer.echo(f"Haetaan dataa sivulta {page}...")
+        retries = 0
+        try:
+            hankeikkuna_data = Hankeikkuna.fetch_data_from_api(per_page, page)
+            found = find_he_id(hankeikkuna_data, he)
+            if found:
+                print_pretty_json(found)
+                break
+        except Exception as e:
+            retries += 1
+            typer.echo(f"Virhe sivulla {page}: {e}. Yritys {retries}/{max_retries}")
+            if retries >= max_retries:
+                typer.echo(f"Virhe sivulla {page}, eikä yrityksiä enää jäljellä. Prosessi keskeytetään.")
+                break
+            time.sleep(5)
+
+@app.command(name="findp")
+def print_proposal_from_hankeikkuna():
+    """Etsi tietty hanke hankeikkunasta"""
+    data = Hankeikkuna.fetch_proposal_from_api()
+    print_pretty_json(data)
+
 @app.command(name="esh")
 def export_selected_hankeikkuna_data(per_page: int, page:int):
     """Vie sivullinen käsiteltyä hankeikkuna-dataa tietokantaan"""
@@ -109,6 +140,8 @@ def print_selected_hankeikkuna_data(per_page: int, page: int):
     print_pretty_json(processed_data)
     typer.echo(f"Processed data size: {len(processed_data)}")
 
+
+
 @app.command(name="pa")
 def print_avoindata(per_page: int, page: int):
     """Tulosta avoindataa rajapinnasta. Käyttö: pa [per_page] [page]"""
@@ -137,6 +170,17 @@ def print_hankeikkuna_headers():
             print_pretty_json(key)
     except Exception as api_error:
         typer.echo(f"Virhe haettaessa dataa: {api_error}")
+
+@app.command(name="ak")
+def print_hankeikkuna_asiakirjat():
+    try:
+        hankeikkuna_data = Hankeikkuna.fetch_data_from_api(1000, 1)
+        for i in range(10):
+           for asiakirja in hankeikkuna_data["result"][i]["asiakirjat"]:
+                print_pretty_json(asiakirja["nimi"]["fi"])
+    except Exception as api_error:
+        typer.echo(f"Virhe haettaessa dataa: {api_error}")
+
 
 @app.command(name="find")
 def find_document_by_he_id(he_id):
