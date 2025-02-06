@@ -202,6 +202,15 @@ def print_he_lists_from_hankeikkuna(per_page: int, page: int):
         processed_data = find_proposal_identifier_list(hankeikkuna_data, i)
         print_pretty_json(processed_data)
 
+@app.command(name="rep")
+def remove_empty_proposals():
+    """Poista tyhjät hallituksen esitykset tietokannasta"""
+    try:
+        db_service.translate_to_finnish()
+    except Exception as db_error:
+        typer.echo(f"Virhe tietokantaoperaatiossa: {db_error}")
+
+
 
 @app.command(name="vp")
 def clean_all_he_id_in_database():

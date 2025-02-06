@@ -59,3 +59,16 @@ class DBService:
         else:
             print("Tekstihakemisto on jo olemassa.")
 
+    def translate_to_finnish(self):
+        i = 0
+        for document in self.collection.find():
+            print(i)
+            i += 1
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'heIdentifier': ''}})
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'name': ''}})
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'proposalUrl': ''}})
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'proposalContent': ''}})
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'preparatoryIdentifier': ''}})
+            self.collection.update_one({'_id': document['_id']}, {'$unset': {'id': ''}})
+        print('Avaimet on vaihdettu onnistuneesti!')
+
