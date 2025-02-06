@@ -21,27 +21,27 @@ class DBService:
         return self.collection.find_one({"id": document_id}) is not None
     
     def find_document_by_he_id(self, he_id):
-        return self.collection.find_one({"heIdentifier": he_id})
+        return self.collection.find_one({"heTunnus": he_id})
     
     def update_document(self, he_id, preparatory_id, submissions):
         result = self.collection.update_one(
-            {"heIdentifier": he_id},
-            {"$set": {"preparatoryIdentifier": preparatory_id, "submissions": submissions}}
+            {"heTunnus": he_id},
+            {"$set": {"valmistelutunnus": preparatory_id, "lausunnot": submissions}}
         )
         return result.modified_count
     
     def clean_identifiers(self):
         regex = r" vp$"
-        documents = self.collection.find({"heIdentifier": {"$regex": regex}})
+        documents = self.collection.find({"heTunnus": {"$regex": regex}})
         updated_count = 0
 
         for doc in documents:
-            identifier = doc["heIdentifier"]
+            identifier = doc["heTunnus"]
             new_identifier = re.sub(regex, "", identifier)
             print(f"{identifier} -> {new_identifier}")
             self.collection.update_one(
                 {"_id": doc["_id"]},
-                {"$set": {"heIdentifier": new_identifier}}
+                {"$set": {"heTunnus": new_identifier}}
             )
             updated_count += 1
 
@@ -50,11 +50,11 @@ class DBService:
     def create_search_index(self):
         existing_indexes = self.collection.list_indexes()
         index_exists = any(
-            idx["key"] == {"name": "text", "heIdentifier": "text", "preparatoryIdentifier": "text", "proposalContent": "text"}
+            idx["key"] == {"heNimi": "text", "heTunnus": "text", "valmistelutunnus": "text"}
             for idx in existing_indexes
         )
         if not index_exists:
-            self.collection.create_index([("name", "text"), ("heIdentifier", "text"), ("preparatoryIdentifier", "text"), ("proposalContent", "text")])
+            self.collection.create_index([("heNimi", "text"), ("heTunnus", "text"), ("valmistelutunnus", "text")])
             print("Tekstihakemisto luotu.")
         else:
             print("Tekstihakemisto on jo olemassa.")
