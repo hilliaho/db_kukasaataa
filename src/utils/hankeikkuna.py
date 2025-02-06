@@ -53,3 +53,9 @@ def find_proposal_identifier(data, i):
     if he_id_list:
         return he_id_list[0]
     return None
+
+def find_proposal_identifier_list(data, i):
+    he_id_list = data["result"][i]["lainsaadanto"]["heTiedot"]["heNumerot"]
+    if he_id_list:
+        return he_id_list
+    return None

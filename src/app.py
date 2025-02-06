@@ -6,6 +6,7 @@ from utils.avoindata import process_and_store_data
 from utils.formatter import print_pretty_json
 from utils.hankeikkuna import process_hankeikkuna_data
 from utils.hankeikkuna import find_he_id_from_data
+from utils.hankeikkuna import find_proposal_identifier_list
 import time
 
 
@@ -178,6 +179,7 @@ def print_hankeikkuna_asiakirjat():
 
 @app.command(name="find")
 def find_document_by_he_id(he_id):
+    """Etsi hanke omasta tietokannasta he-tunnuksen perusteella"""
     try:
         document = db_service.find_document_by_he_id(he_id)
         if document:
@@ -188,6 +190,18 @@ def find_document_by_he_id(he_id):
             typer.echo(f"Dokumenttia tunnuksella {he_id} ei löytynyt tietokannasta.")
     except Exception as db_error:
         typer.echo("Virhe tietokantaoperaatiossa: {db_error}")
+
+@app.command(name="phe")
+def print_he_lists_from_hankeikkuna(per_page: int, page: int):
+    """Tulosta he-numerot sivullisesta hankeikkuna-dataa"""
+    try:
+        hankeikkuna_data = Hankeikkuna.fetch_data_from_api(per_page, page)
+    except Exception as e:
+        typer.echo(f"Virhe haettaessa dataa: {e}")
+    for i in range(per_page):
+        processed_data = find_proposal_identifier_list(hankeikkuna_data, i)
+        print_pretty_json(processed_data)
+
 
 @app.command(name="vp")
 def clean_all_he_id_in_database():
