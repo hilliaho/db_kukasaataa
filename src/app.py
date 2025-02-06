@@ -5,7 +5,7 @@ from services.db_service import DBService
 from utils.avoindata import process_and_store_data
 from utils.formatter import print_pretty_json
 from utils.hankeikkuna import process_hankeikkuna_data
-from utils.hankeikkuna import find_he_id
+from utils.hankeikkuna import find_he_id_from_data
 import time
 
 
@@ -75,7 +75,7 @@ def export_all_hankeikkuna_data():
 
 @app.command(name="findh")
 def print_he_from_hankeikkuna(he: str):
-    """Etsi tietty hanke hankeikkunasta"""
+    """Etsi ja tulosta tietty hanke hankeikkunasta he-tunnuksen perusteella"""
     per_page = 1000
     page = 1
     max_pages = 1000
@@ -85,7 +85,7 @@ def print_he_from_hankeikkuna(he: str):
         retries = 0
         try:
             hankeikkuna_data = Hankeikkuna.fetch_data_from_api(per_page, page)
-            found = find_he_id(hankeikkuna_data, he)
+            found = find_he_id_from_data(hankeikkuna_data, he)
             if found:
                 print_pretty_json(found)
                 break
@@ -96,12 +96,6 @@ def print_he_from_hankeikkuna(he: str):
                 typer.echo(f"Virhe sivulla {page}, eikä yrityksiä enää jäljellä. Prosessi keskeytetään.")
                 break
             time.sleep(5)
-
-@app.command(name="findp")
-def print_proposal_from_hankeikkuna():
-    """Etsi tietty hanke hankeikkunasta"""
-    data = Hankeikkuna.fetch_proposal_from_api()
-    print_pretty_json(data)
 
 @app.command(name="esh")
 def export_selected_hankeikkuna_data(per_page: int, page:int):

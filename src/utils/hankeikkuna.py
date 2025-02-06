@@ -16,7 +16,7 @@ def process_hankeikkuna_data(data):
         submission_data.append(project_submissions)
     return submission_data
 
-def find_he_id(data, he_id):
+def find_he_id_from_data(data, he_id):
     print(f"etsitään {he_id}")
     size = data["size"]
     print(f"size: {size}")
