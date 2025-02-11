@@ -1,7 +1,5 @@
 Todo
 Poista mongodb:stä tyhjät hallituksen esitykset
-muokkaa mongodb:tä niin että siellä on kaikki suomeksi
-muokkaa mongodb:tä niin että siellä on dokumentit-osio dokumenteille
 Tutki monen hallituksen esityksen hankkeita ja mieti ratkaisua niille
 
 Käyttöohjeet
