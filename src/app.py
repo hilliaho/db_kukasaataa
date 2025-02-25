@@ -3,6 +3,7 @@ from services.hankeikkuna_api_service import HankeikkunaApiService as Hankeikkun
 from services.avoindata_api_service import AvoindataApiService as Avoindata
 from services.db_service import DBService
 from utils.avoindata import process_and_store_data
+from utils.avoindata import process_asiantuntijalausunnot
 from utils.formatter import print_pretty_json
 from utils.hankeikkuna import process_hankeikkuna_data
 from utils.hankeikkuna import find_he_id_from_data
@@ -210,8 +211,6 @@ def remove_empty_proposals():
     except Exception as db_error:
         typer.echo(f"Virhe tietokantaoperaatiossa: {db_error}")
 
-
-
 @app.command(name="vp")
 def clean_all_he_id_in_database():
     try:
@@ -225,6 +224,32 @@ def create_search_index():
         db_service.create_search_index()
     except Exception as db_error:
         typer.echo(f"Virhe hakuindeksin luomisessa: {db_error}")
+
+@app.command(name="doc")
+def add_document_key_to_db():
+    try:
+        db_service.add_document_field()
+    except Exception as db_error:
+        typer.echo(f"Virhe dokumenttikentän luomisessa: {db_error}")
+
+@app.command(name="eal")
+def export_asiantuntijalausunnot_from_api_to_db():
+    """Hae kaikki asiantuntijalausunnot avoindatasta ja vie ne tietokantaan"""
+    i = 0
+    while True:
+        typer.echo(f"Haetaan asiantuntijalausuntoja sivulta {i}")
+        api_data = Avoindata.fetch_asiantuntijalausunnot_from_api(100, i)
+        has_more = api_data["hasMore"]
+        data = process_asiantuntijalausunnot(api_data)
+        for element in data:
+            he_id = element["he_tunnus"]
+            db_service.export_asiantuntijalausunnot(element, he_id)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
+
 
 if __name__ == "__main__":
     app()

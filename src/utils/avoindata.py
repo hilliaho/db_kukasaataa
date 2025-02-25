@@ -6,6 +6,37 @@ from services.db_service import DBService
 
 db_service = DBService()
 
+def process_asiantuntijalausunnot(api_data):
+    """Käsittele asiantuntijalausunnot ja muokkaa ne sopivaan muotoon"""
+    result_list = api_data["rowData"]
+    processed_list = []
+    for i in range(len(result_list)):
+        identifier = result_list[i][1]
+        identifier = remove_vp(identifier)
+        xml_name = result_list[i][3]
+        xml_url = result_list[i][5]
+        name_row = parse_xml_name(xml_name)
+        name = remove_unnecessary_info_from_name(name_row)
+        url_match = re.search(r'href="([^"]+)"', xml_url)
+        url = ""
+        if url_match:
+            url = url_match.group(1)
+        processed_element = {
+            "he_tunnus": identifier,
+            "nimi": name,
+            "url": url
+        }
+        processed_list.append(processed_element)
+    return processed_list
+
+def remove_vp(he_id):
+    return re.sub(r'\s*vp$', '', he_id)
+
+def remove_unnecessary_info_from_name(text):
+    text = text.strip()
+    name = re.sub(r'^[A-Z]+\s\d{1,3}/\d{4}\svp\s[A-Za-z]+\s\d{2}\.\d{2}\.\d{4}\s', '', text)
+    name = re.sub(r'\s*Asiantuntijalausunto$', '', name)
+    return name
 
 def process_and_store_data(api_data, per_page):
     """Käsittelee ja tallentaa datan tietokantaan."""
@@ -27,19 +58,14 @@ def parse_government_proposals(data, per_page):
         proposal_url = data["rowData"][i][5]
         name = parse_xml_name(xml_name)
         url_match = re.search(r'href="([^"]+)"', proposal_url)
-        proposal_content = "Ei tekstiä"
         if url_match:
             proposal_url = url_match.group(1)
-            proposal_content = extract_text_from_pdf(proposal_url)
-        preparatory_identifier = find_preparatory_identifier(proposal_content)
         if name and re.match(r"^HE \d{1,3}/\d{4} vp$", he_identifier):
             document = create_document(
                 id,
                 he_identifier,
                 name,
                 proposal_url,
-                proposal_content,
-                preparatory_identifier,
             )
             government_proposals.append(document)
     return government_proposals

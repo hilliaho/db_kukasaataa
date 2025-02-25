@@ -59,16 +59,27 @@ class DBService:
         else:
             print("Tekstihakemisto on jo olemassa.")
 
-    def translate_to_finnish(self):
+    def add_document_field(self):
         i = 0
-        for document in self.collection.find():
+        for doc in self.collection.find():
             print(i)
             i += 1
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'heIdentifier': ''}})
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'name': ''}})
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'proposalUrl': ''}})
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'proposalContent': ''}})
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'preparatoryIdentifier': ''}})
-            self.collection.update_one({'_id': document['_id']}, {'$unset': {'id': ''}})
-        print('Avaimet on vaihdettu onnistuneesti!')
+            if 'dokumentit' not in doc:
+                documents = {
+                    'lausunnot': [],
+                    'asiantuntijalausunnot': [],
+                    'valiokuntaAsiakirjat': [] 
+                }
+                result = self.collection.update_one({'_id': doc['_id']}, {'$set': {'dokumentit': documents}})
+                if result.modified_count == 0:
+                    print(f"Dokumenttia {i} ei päivitetty.")
+            else:
+                print(f"Dokumentilla {i} on jo kenttä 'dokumentit'.")
 
+    def export_asiantuntijalausunnot(self, data, he_id):
+        print(he_id)
+        result = self.collection.update_one(
+            {"heTunnus": he_id},
+            {"$push": {"dokumentit.asiantuntijalausunnot": data}}
+        )
+        return result.modified_count
