@@ -1,7 +1,3 @@
-Todo
-Poista mongodb:stä tyhjät hallituksen esitykset
-Tutki monen hallituksen esityksen hankkeita ja mieti ratkaisua niille
-
 Käyttöohjeet
 
 Asennus
