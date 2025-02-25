@@ -3,7 +3,7 @@ from services.hankeikkuna_api_service import HankeikkunaApiService as Hankeikkun
 from services.avoindata_api_service import AvoindataApiService as Avoindata
 from services.db_service import DBService
 from utils.avoindata import process_and_store_data
-from utils.avoindata import process_asiantuntijalausunnot
+from utils.avoindata import process_preparatory_documents
 from utils.formatter import print_pretty_json
 from utils.hankeikkuna import process_hankeikkuna_data
 from utils.hankeikkuna import find_he_id_from_data
@@ -15,16 +15,18 @@ app = typer.Typer(help="Sovellus avoindatan ja hankeikkuna-datan käsittelyyn.")
 db_service = DBService()
 
 
+
 @app.command(name="eaa")
 def export_all_avoindata():
-    """Vie kaikki avoindata tietokantaan."""
+    """Vie kaikki hallituksen esitykset tietokantaan."""
     per_page = 30
     typer.echo("Haetaan avoindataa...")
     i = 0
     while True:
         typer.echo(f"Haetaan sivulta {i + 1}")
         try:
-            avoindata_data = Avoindata.fetch_data_from_api(per_page, i + 1)
+            document_type = "Hallituksen+esitys"
+            avoindata_data = Avoindata.fetch_data_from_api(per_page, i+1, document_type)
             if not avoindata_data:
                 typer.echo("Tapahtui virhe. Dataa ei voitu hakea.")
                 break
@@ -41,10 +43,11 @@ def export_all_avoindata():
 
 @app.command(name="esa")
 def export_selected_avoindata(per_page: int, page: int):
-    """Vie valittu avoindata tietokantaan.  Käyttö: esa [per_page] [page]"""
+    """Vie sivullinen hallituksen esityksiä tietokantaan.  Käyttö: esa [per_page] [page]"""
     try:
         typer.echo(f"Haetaan avoindata: per_page={per_page}, page={page}")
-        avoindata_data = Avoindata.fetch_data_from_api(per_page, page)
+        document_type = "Hallituksen+esitys"
+        avoindata_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         if avoindata_data:
             process_and_store_data(avoindata_data, per_page)
         else:
@@ -140,9 +143,10 @@ def print_selected_hankeikkuna_data(per_page: int, page: int):
 
 @app.command(name="pa")
 def print_avoindata(per_page: int, page: int):
-    """Tulosta avoindataa rajapinnasta. Käyttö: pa [per_page] [page]"""
+    """Tulosta hallituksen esityksiä avoindata-rajapinnasta. Käyttö: pa [per_page] [page]"""
     try:
-        avoindata_data = Avoindata.fetch_data_from_api(per_page, page)
+        document_type = "Hallituksen+esitys"
+        avoindata_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         print_pretty_json(avoindata_data)
     except Exception as e:
         typer.echo(f"Virhe haettaessa dataa: {e}")
@@ -232,18 +236,78 @@ def add_document_key_to_db():
     except Exception as db_error:
         typer.echo(f"Virhe dokumenttikentän luomisessa: {db_error}")
 
+@app.command(name="pal")
+def print_asiantuntijalausunnot():
+    """Hae ja tulosta kaikki asiantuntijalausunnot avoindatasta"""
+    i = 0
+    while True:
+        typer.echo(f"Haetaan asiantuntijalausuntoja sivulta {i}")
+        per_page = 100
+        page = 1
+        document_type = "Asiantuntijalausunto"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
+        has_more = api_data["hasMore"]
+        data = process_preparatory_documents(api_data)
+        for element in data:
+            print_pretty_json(element)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
 @app.command(name="eal")
 def export_asiantuntijalausunnot_from_api_to_db():
     """Hae kaikki asiantuntijalausunnot avoindatasta ja vie ne tietokantaan"""
     i = 0
     while True:
         typer.echo(f"Haetaan asiantuntijalausuntoja sivulta {i}")
-        api_data = Avoindata.fetch_asiantuntijalausunnot_from_api(100, i)
+        per_page = 100
+        page = 1
+        document_type = "Asiantuntijalausunto"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         has_more = api_data["hasMore"]
-        data = process_asiantuntijalausunnot(api_data)
+        data = process_preparatory_documents(api_data)
         for element in data:
             he_id = element["he_tunnus"]
             db_service.export_asiantuntijalausunnot(element, he_id)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
+@app.command(name="pvl")
+def print_valiokunnan_lausunnot():
+    """Hae ja tulosta kaikki valiokunnan lausunnot avoindatasta"""
+    i = 0
+    while True:
+        typer.echo(f"Haetaan valiokunnan lausuntoja sivulta {i}")
+        per_page = 100
+        page = 1
+        document_type = "Valiokunnan+lausunto"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
+        has_more = api_data["hasMore"]
+        data = process_preparatory_documents(api_data)
+        for element in data:
+            print_pretty_json(element)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
+@app.command(name="pvm")
+def print_valiokunnan_mietinnot():
+    """Hae ja tulosta kaikki valiokunnan mietinnöt avoindatasta"""
+    i = 0
+    while True:
+        typer.echo(f"Haetaan valiokunnan mietintöjä sivulta {i}")
+        per_page = 100
+        page = 1
+        document_type = "Valiokunnan+mietintö"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
+        has_more = api_data["hasMore"]
+        data = process_preparatory_documents(api_data)
+        for element in data:
+            print_pretty_json(element)
         print(i)
         if not has_more:
             break

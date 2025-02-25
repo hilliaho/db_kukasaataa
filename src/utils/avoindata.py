@@ -6,8 +6,8 @@ from services.db_service import DBService
 
 db_service = DBService()
 
-def process_asiantuntijalausunnot(api_data):
-    """Käsittele asiantuntijalausunnot ja muokkaa ne sopivaan muotoon"""
+def process_preparatory_documents(api_data):
+    """Käsittele valmisteluasiakirjat ja muokkaa ne sopivaan muotoon"""
     result_list = api_data["rowData"]
     processed_list = []
     for i in range(len(result_list)):
@@ -30,6 +30,7 @@ def process_asiantuntijalausunnot(api_data):
     return processed_list
 
 def remove_vp(he_id):
+    he_id = he_id.split(",")[0]
     return re.sub(r'\s*vp$', '', he_id)
 
 def remove_unnecessary_info_from_name(text):
