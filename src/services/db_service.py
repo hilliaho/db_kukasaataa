@@ -76,10 +76,21 @@ class DBService:
             else:
                 print(f"Dokumentilla {i} on jo kenttä 'dokumentit'.")
 
-    def export_asiantuntijalausunnot(self, data, he_id):
+    def push_documents(self, data, he_id, document_type):
         print(he_id)
         result = self.collection.update_one(
             {"heTunnus": he_id},
-            {"$push": {"dokumentit.asiantuntijalausunnot": data}}
+            {"$push": {f"dokumentit.{document_type}": data}}
         )
         return result.modified_count
+    
+    def delete_documents(self, document_type):
+        i = 0
+        for doc in self.collection.find():
+            print(i)
+            i += 1
+            result = self.collection.update_one(
+                {"_id": doc['_id']},
+                {"$set": {f"dokumentit.{document_type}": []}}
+            )
+            print("modified count: ", result.modified_count)

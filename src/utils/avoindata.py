@@ -14,8 +14,10 @@ def process_preparatory_documents(api_data):
         identifier = result_list[i][1]
         identifier = remove_vp(identifier)
         xml_name = result_list[i][3]
+        xml_doc_type = result_list[i][4]
         xml_url = result_list[i][5]
         name_row = parse_xml_name(xml_name)
+        doc_type = parse_xml_doc_type(xml_doc_type)
         name = remove_unnecessary_info_from_name(name_row)
         url_match = re.search(r'href="([^"]+)"', xml_url)
         url = ""
@@ -23,6 +25,7 @@ def process_preparatory_documents(api_data):
             url = url_match.group(1)
         processed_element = {
             "he_tunnus": identifier,
+            "asiakirjatyyppi": doc_type,
             "nimi": name,
             "url": url
         }
@@ -79,6 +82,20 @@ def parse_xml_name(xml_data):
         root = ET.fromstring(wrapped_xml)
         names = root.findall(
             ".//{http://www.vn.fi/skeemat/metatietoelementit/2010/04/27}NimekeTeksti"
+        )
+        name = names[0]
+        return name.text
+    except ET.ParseError as e:
+        print(f"XML-parsinta epäonnistui: {e}")
+        return None
+
+def parse_xml_doc_type(xml_data):
+    wrapped_xml = f"<root>{xml_data}</root>"
+
+    try:
+        root = ET.fromstring(wrapped_xml)
+        names = root.findall(
+            ".//{http://www.vn.fi/skeemat/metatietoelementit/2010/04/27}AsiakirjatyyppiNimi"
         )
         name = names[0]
         return name.text

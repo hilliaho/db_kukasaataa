@@ -243,7 +243,7 @@ def print_asiantuntijalausunnot():
     while True:
         typer.echo(f"Haetaan asiantuntijalausuntoja sivulta {i}")
         per_page = 100
-        page = 1
+        page = i
         document_type = "Asiantuntijalausunto"
         api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         has_more = api_data["hasMore"]
@@ -262,7 +262,7 @@ def export_asiantuntijalausunnot_from_api_to_db():
     while True:
         typer.echo(f"Haetaan asiantuntijalausuntoja sivulta {i}")
         per_page = 100
-        page = 1
+        page = i
         document_type = "Asiantuntijalausunto"
         api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         has_more = api_data["hasMore"]
@@ -281,14 +281,36 @@ def print_valiokunnan_lausunnot():
     i = 0
     while True:
         typer.echo(f"Haetaan valiokunnan lausuntoja sivulta {i}")
-        per_page = 100
-        page = 1
+        per_page = 10
+        page = i
+        document_type = "Valiokunnan+lausunto"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
+        has_more = api_data["hasMore"]
+        print(has_more)
+        data = process_preparatory_documents(api_data)
+        for element in data:
+            print_pretty_json(element)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
+@app.command(name="evl")
+def export_valiokunnan_lausunnot_from_api_to_db():
+    """Hae kaikki valiokunnan lausunnot avoindatasta ja vie ne tietokantaan"""
+    i = 0
+    while True:
+        typer.echo(f"Haetaan valiokunnan lausuntoja sivulta {i}")
+        per_page = 10
+        page = i
         document_type = "Valiokunnan+lausunto"
         api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         has_more = api_data["hasMore"]
         data = process_preparatory_documents(api_data)
         for element in data:
-            print_pretty_json(element)
+            he_id = element["he_tunnus"]
+            document_type = "valiokuntaAsiakirjat"
+            db_service.push_documents(element, he_id, document_type)
         print(i)
         if not has_more:
             break
@@ -301,19 +323,45 @@ def print_valiokunnan_mietinnot():
     while True:
         typer.echo(f"Haetaan valiokunnan mietintöjä sivulta {i}")
         per_page = 100
-        page = 1
+        page = i
         document_type = "Valiokunnan+mietintö"
         api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
         has_more = api_data["hasMore"]
         data = process_preparatory_documents(api_data)
         for element in data:
-            print_pretty_json(element)
+            print_pretty_json(element["nimi"])
         print(i)
         if not has_more:
             break
         i +=1
 
 
+@app.command(name="evm")
+def export_valiokunnan_mietinnot_from_api_to_db():
+    """Hae kaikki valiokunnan mietinnöt avoindatasta ja vie ne tietokantaan"""
+    i = 64
+    while True:
+        typer.echo(f"Haetaan valiokunnan mietintöjä sivulta {i}")
+        per_page = 10
+        page = i
+        document_type = "Valiokunnan+mietintö"
+        api_data = Avoindata.fetch_data_from_api(per_page, page, document_type)
+        has_more = api_data["hasMore"]
+        data = process_preparatory_documents(api_data)
+        for element in data:
+            he_id = element["he_tunnus"]
+            document_type = "valiokuntaAsiakirjat"
+            db_service.push_documents(element, he_id, document_type)
+        print(i)
+        if not has_more:
+            break
+        i +=1
+
+@app.command(name="dva")
+def delete_valiokunta_asiakirjat():
+    document_type = "valiokuntaAsiakirjat"
+    db_service.delete_documents(document_type)
+    
 
 if __name__ == "__main__":
     app()
