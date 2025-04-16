@@ -9,7 +9,7 @@ from utils.hankeikkuna import process_hankeikkuna_data
 from utils.hankeikkuna import find_he_id_from_data
 from utils.hankeikkuna import find_proposal_identifier_list
 import time
-
+import json
 
 app = typer.Typer(help="Sovellus avoindatan ja hankeikkuna-datan käsittelyyn.")
 db_service = DBService()
@@ -161,6 +161,15 @@ def print_hankeikkuna_data(per_page: int, page: int):
     except Exception as e:
         typer.echo(f"Virhe haettaessa dataa: {e}")
 
+@app.command(name="sh")
+def save_hankeikkuna_data_to_file(per_page: int, page:int):
+    """Tallenna hankeikkuna-dataa rajapinnasta. Käyttö sh [per_page] [page]"""
+    try:
+        hankeikkuna_data = Hankeikkuna.fetch_data_from_api(per_page, page)
+        with open('data.json', 'w', encoding='utf-8') as f:
+            json.dump(hankeikkuna_data, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        typer.echo(f"Virhe haettaessa dataa: {e}")
 
 @app.command(name="phh")
 def print_hankeikkuna_headers():
@@ -172,10 +181,10 @@ def print_hankeikkuna_headers():
         typer.echo(f"Virhe haettaessa dataa: {api_error}")
 
 @app.command(name="ak")
-def print_hankeikkuna_asiakirjat():
+def print_hankeikkuna_asiakirjat(per_page: int, page: int):
     try:
-        hankeikkuna_data = Hankeikkuna.fetch_data_from_api(1000, 1)
-        for i in range(10):
+        hankeikkuna_data = Hankeikkuna.fetch_data_from_api(per_page, page)
+        for i in range(per_page):
            for asiakirja in hankeikkuna_data["result"][i]["asiakirjat"]:
                 print_pretty_json(asiakirja["nimi"]["fi"])
     except Exception as api_error:
@@ -361,6 +370,10 @@ def export_valiokunnan_mietinnot_from_api_to_db():
 def delete_valiokunta_asiakirjat():
     document_type = "valiokuntaAsiakirjat"
     db_service.delete_documents(document_type)
+
+@app.command(name="main")
+def update_all():
+    print('update')
     
 
 if __name__ == "__main__":
